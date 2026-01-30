@@ -16,7 +16,7 @@ import pytest
 from dotenv import load_dotenv
 
 from livekit import rtc
-from livekit.agents import APIConnectOptions, APIError, APITimeoutError, tokenize, tts
+from livekit.agents import APIConnectOptions, APIError, APITimeoutError, inference, tokenize, tts
 from livekit.agents.utils import AudioBuffer, aio
 from livekit.plugins import (
     aws,
@@ -35,6 +35,7 @@ from livekit.plugins import (
     rime,
     speechify,
     spitch,
+    typecast,
 )
 
 from .fake_tts import FakeTTS
@@ -181,13 +182,6 @@ SYNTHESIZE_TTS = [
     ),
     pytest.param(
         lambda: {
-            "tts": groq.TTS(),
-            "proxy-upstream": "api.groq.com:443",
-        },
-        id="groq",
-    ),
-    pytest.param(
-        lambda: {
             "tts": lmnt.TTS(),
             "proxy-upstream": "api.lmnt.com:443",
         },
@@ -248,6 +242,22 @@ SYNTHESIZE_TTS = [
             "proxy-upstream": "api.inworld.ai:443",
         },
         id="inworld",
+    ),
+    pytest.param(
+        lambda: {
+            "tts": inference.TTS(model="cartesia/sonic-3"),
+            "proxy-upstream": "agent-gateway.livekit.cloud:443",
+        },
+        id="inference-cartesia",
+    ),
+    pytest.param(
+        lambda: {
+            "tts": typecast.TTS(
+                voice=os.getenv("TYPECAST_VOICE_ID", "tc_62a8975e695ad26f7fb514d1")
+            ),
+            "proxy-upstream": "api.typecast.ai:443",
+        },
+        id="typecast",
     ),
 ]
 
@@ -449,6 +459,20 @@ STREAM_TTS = [
             "proxy-upstream": "api.inworld.ai:443",
         },
         id="inworld-stream-adapter",
+    ),
+    pytest.param(
+        lambda: {
+            "tts": tts.StreamAdapter(tts=groq.TTS()),
+            "proxy-upstream": "api.groq.com:443",
+        },
+        id="groq-stream-adapter",
+    ),
+    pytest.param(
+        lambda: {
+            "tts": tts.StreamAdapter(tts=inference.TTS(model="rime/arcana")),
+            "proxy-upstream": "agent-gateway.livekit.cloud:443",
+        },
+        id="inference-rime",
     ),
 ]
 
